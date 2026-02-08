@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Mind Drift</title>
+
+<style>
+/* ===== GLOBAL ===== */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family: "Poppins", system-ui;
+}
+body{
+  height:100vh;
+  overflow:hidden;
+  background: linear-gradient(-45deg,#0f2027,#203a43,#2c5364,#1b2735);
+  background-size:400% 400%;
+  animation:bg 12s ease infinite;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  color:white;
+}
+
+@keyframes bg{
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+
+/* ===== GAME AREA ===== */
+#game{
+  width:100%;
+  height:100%;
+  position:relative;
+  overflow:hidden;
+}
+
+/* floating orbs */
+.orb{
+  position:absolute;
+  width:55px;
+  height:55px;
+  border-radius:50%;
+  backdrop-filter: blur(6px);
+  box-shadow:0 0 20px rgba(255,255,255,0.5);
+  animation:pop 2s linear forwards;
+  cursor:pointer;
+}
+
+@keyframes pop{
+  0%{transform:scale(.4);opacity:0}
+  50%{opacity:1}
+  100%{transform:scale(1.8);opacity:0}
+}
+
+.calm{
+  background:rgba(80,200,255,0.6);
+}
+
+.chaos{
+  background:rgba(255,80,120,0.7);
+}
+
+/* ===== HUD ===== */
+.hud{
+  position:fixed;
+  top:15px;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  gap:25px;
+  padding:10px 25px;
+  border-radius:15px;
+  background:rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+}
+
+/* ===== GAME OVER ===== */
+#gameOver{
+  position:absolute;
+  inset:0;
+  display:none;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  gap:15px;
+  background:rgba(0,0,0,0.6);
+  backdrop-filter:blur(8px);
+}
+
+button{
+  padding:10px 25px;
+  border:none;
+  border-radius:12px;
+  font-size:16px;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+  <div class="hud">
+    <div>Score: <span id="score">0</span></div>
+    <div>Focus: <span id="focus">5</span></div>
+    <div>High: <span id="high">0</span></div>
+  </div>
+
+  <div id="gameOver">
+    <h1>Mind Drift Lost 😵</h1>
+    <p id="finalScore"></p>
+    <button onclick="restart()">Retry</button>
+  </div>
+
+</div>
+
+<script>
+const game = document.getElementById("game")
+const scoreEl = document.getElementById("score")
+const focusEl = document.getElementById("focus")
+const highEl = document.getElementById("high")
+const gameOver = document.getElementById("gameOver")
+const finalScore = document.getElementById("finalScore")
+
+let score=0
+let focus=5
+let speed=1200
+let playing=true
+
+let high = localStorage.getItem("mindHigh") || 0
+highEl.textContent = high
+
+function spawnOrb(){
+  if(!playing) return
+
+  const orb=document.createElement("div")
+  orb.classList.add("orb")
+
+  const type=Math.random()>0.65?"chaos":"calm"
+  orb.classList.add(type)
+
+  orb.style.left=Math.random()*90+"%"
+  orb.style.top=Math.random()*90+"%"
+
+  orb.onclick=()=>{
+    if(type==="calm"){
+      score+=10
+    }else{
+      focus--
+    }
+    update()
+    orb.remove()
+  }
+
+  game.appendChild(orb)
+
+  setTimeout(()=>orb.remove(),2000)
+}
+
+function update(){
+  scoreEl.textContent=score
+  focusEl.textContent=focus
+
+  if(focus<=0){
+    endGame()
+  }
+}
+
+function endGame(){
+  playing=false
+  finalScore.textContent="Score: "+score
+
+  if(score>high){
+    high=score
+    localStorage.setItem("mindHigh",high)
+  }
+
+  highEl.textContent=high
+  gameOver.style.display="flex"
+}
+
+function restart(){
+  score=0
+  focus=5
+  speed=1200
+  playing=true
+  gameOver.style.display="none"
+  update()
+}
+
+setInterval(()=>{
+  spawnOrb()
+  if(speed>350) speed-=8
+}, 500)
+
+update()
+</script>
+
+</body>
+</html>
